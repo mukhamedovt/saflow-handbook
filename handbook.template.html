@@ -83,6 +83,50 @@
     }
     nav button[aria-current="true"] small { color: #d5e4db; }
     nav button.hidden { display: none; }
+    .modes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 8px 14px; }
+    .modes button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 13px;
+    }
+    .modes button[aria-pressed="true"] {
+      background: var(--accent);
+      color: #f6f3ec;
+      border-color: var(--accent);
+    }
+    .checks { list-style: none; padding: 0; margin: 0 0 12px; }
+    .checks li { margin: 0 0 8px; }
+    .checks label {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 15px;
+    }
+    textarea.paste {
+      display: block;
+      width: 100%;
+      min-height: 110px;
+      margin-top: 4px;
+      margin-bottom: 12px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7f4ee;
+      color: var(--ink);
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    .field {
+      display: block;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
     main {
       padding: 36px 48px 80px;
       max-width: 920px;
@@ -111,6 +155,7 @@
     article p { margin: 0 0 12px; }
     article ul, article ol { margin: 0 0 14px; padding-left: 1.2em; }
     article li { margin: 0 0 6px; }
+    article a { color: var(--accent); }
     article code {
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       font-size: 0.88em;
@@ -188,6 +233,7 @@
     <aside>
       <p class="mark">saflow</p>
       <h1>Справочник</h1>
+      <div class="modes" id="modes"></div>
       <input class="find" type="search" placeholder="Найти ситуацию" aria-label="Найти ситуацию">
       <nav id="nav"></nav>
     </aside>
@@ -205,6 +251,21 @@
         <pre id="prompt"></pre>
         <p class="note">Вставьте страницу проекта и файлы, которые промпт перечисляет. Прошлый диалог не продолжайте: в длинном чате остаются старые догадки.</p>
       </section>
+      <section class="prompt" id="review-box" hidden>
+        <h3>Сверка фрагмента с артефактами</h3>
+        <div class="actions" id="profiles"></div>
+        <ul class="checks" id="checks"></ul>
+        <label class="field">Критерии и сценарий
+          <textarea id="criteria" class="paste" spellcheck="false"></textarea>
+        </label>
+        <label class="field">Фрагмент кода
+          <textarea id="code" class="paste" spellcheck="false"></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" id="copy-review">Скопировать запрос на сверку</button>
+        </div>
+        <p class="note">Галочки — ваш черновик. В запрос попадёт и фрагмент. Модель не должна переписывать модуль: только покрытие, дыры и вопросы разработчику.</p>
+      </section>
     </main>
   </div>
   <div class="toast" id="toast">Скопировано</div>
@@ -214,7 +275,10 @@
     const steps = data.steps;
     const nav = document.getElementById("nav");
     const find = document.querySelector(".find");
+    const modes = document.getElementById("modes");
     let current = steps[0].id;
+    let group = localStorage.getItem("saflow-group") || "work";
+    let profile = localStorage.getItem("saflow-profile") || "general";
 
     function escapeHtml(value) {
       return value
@@ -225,6 +289,7 @@
 
     function inline(value) {
       return escapeHtml(value)
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
         .replace(/`([^`]+)`/g, "<code>$1</code>")
         .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
     }
@@ -283,9 +348,98 @@
       return "СИСТЕМНЫЕ ПРАВИЛА\n\n" + step.system + "\n\nПОЛЬЗОВАТЕЛЬСКИЙ ПРОМПТ\n\n" + step.user;
     }
 
+    function checkedSet() {
+      try {
+        return new Set(JSON.parse(localStorage.getItem("saflow-checks") || "[]"));
+      } catch (error) {
+        return new Set();
+      }
+    }
+
+    function saveChecks(set) {
+      localStorage.setItem("saflow-checks", JSON.stringify([...set]));
+    }
+
+    function renderReview() {
+      const box = document.getElementById("review-box");
+      const profiles = document.getElementById("profiles");
+      const checks = document.getElementById("checks");
+      profiles.innerHTML = "";
+      checks.innerHTML = "";
+      const chosen = checkedSet();
+      for (const item of [
+        { id: "general", label: "Любой код" },
+        { id: "onec", label: "1С" },
+      ]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = item.label;
+        button.setAttribute("aria-pressed", item.id === profile ? "true" : "false");
+        button.addEventListener("click", () => {
+          profile = item.id;
+          localStorage.setItem("saflow-profile", profile);
+          renderReview();
+        });
+        profiles.appendChild(button);
+      }
+      for (const item of data.reviewItems) {
+        if (item.profile === "onec" && profile !== "onec") continue;
+        const li = document.createElement("li");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = chosen.has(item.id);
+        input.addEventListener("change", () => {
+          const next = checkedSet();
+          if (input.checked) next.add(item.id);
+          else next.delete(item.id);
+          saveChecks(next);
+        });
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(item.text));
+        li.appendChild(label);
+        checks.appendChild(li);
+      }
+      box.hidden = false;
+    }
+
+    function reviewPrompt(step) {
+      const chosen = checkedSet();
+      const items = data.reviewItems.filter((item) => item.profile === "general" || profile === "onec");
+      const seen = items.filter((item) => chosen.has(item.id)).map((item) => "- " + item.text);
+      const open = items.filter((item) => !chosen.has(item.id)).map((item) => "- " + item.text);
+      const criteria = document.getElementById("criteria").value.trim() || "не вставлено";
+      const code = document.getElementById("code").value.trim() || "не вставлено";
+      return (
+        "СИСТЕМНЫЕ ПРАВИЛА\n\n" + step.system +
+        "\n\nПОЛЬЗОВАТЕЛЬСКИЙ ПРОМПТ\n\n" +
+        "<ПРОФИЛЬ>\n" + (profile === "onec" ? "1С" : "Любой код") + "\n\n" +
+        "<УЖЕ ОТМЕЧЕНО АНАЛИТИКОМ>\n" + (seen.join("\n") || "ничего") + "\n\n" +
+        "<ЕЩЁ НЕ ОТМЕЧЕНО>\n" + (open.join("\n") || "ничего") + "\n\n" +
+        "<КРИТЕРИИ И СЦЕНАРИЙ>\n" + criteria + "\n\n" +
+        "<ФРАГМЕНТ КОДА>\n" + code + "\n\n" +
+        "ЗАДАЧА\nСверь фрагмент с артефактами. Модуль не переписывай.\n"
+      );
+    }
+
+    function applyFilter() {
+      const query = find.value.trim().toLowerCase();
+      for (const button of nav.querySelectorAll("button")) {
+        const step = steps.find((item) => item.id === button.dataset.id);
+        const inGroup = step.group === group;
+        const haystack = (step.situation + " " + step.title + " " + step.card).toLowerCase();
+        button.classList.toggle("hidden", !inGroup || (query && !haystack.includes(query)));
+      }
+    }
+
     function show(id) {
       const step = steps.find((item) => item.id === id) || steps[0];
       current = step.id;
+      group = step.group;
+      localStorage.setItem("saflow-group", group);
+      for (const button of modes.querySelectorAll("button")) {
+        button.setAttribute("aria-pressed", button.dataset.group === group ? "true" : "false");
+      }
       document.getElementById("situation").textContent = "Ситуация";
       document.getElementById("title").textContent = step.situation;
       document.getElementById("lead").textContent = step.title;
@@ -293,14 +447,22 @@
       document.getElementById("card").innerHTML = renderMarkdown(body);
       const box = document.getElementById("prompt-box");
       const systemButton = document.getElementById("copy-system");
-      if (step.system) {
-        box.hidden = false;
-        systemButton.hidden = false;
-        document.getElementById("prompt").textContent = fullPrompt(step);
+      if (step.review) {
+        box.hidden = true;
+        renderReview();
       } else {
-        systemButton.hidden = true;
-        document.getElementById("prompt").textContent = step.card;
+        document.getElementById("review-box").hidden = true;
+        if (step.system) {
+          box.hidden = false;
+          systemButton.hidden = false;
+          document.getElementById("prompt").textContent = fullPrompt(step);
+        } else {
+          box.hidden = false;
+          systemButton.hidden = true;
+          document.getElementById("prompt").textContent = step.card;
+        }
       }
+      applyFilter();
       for (const button of nav.querySelectorAll("button")) {
         if (button.dataset.id === step.id) button.setAttribute("aria-current", "true");
         else button.removeAttribute("aria-current");
@@ -335,6 +497,19 @@
       done();
     }
 
+    for (const item of data.groups) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.group = item.id;
+      button.textContent = item.label;
+      button.addEventListener("click", () => {
+        group = item.id;
+        const first = steps.find((step) => step.group === group);
+        if (first) show(first.id);
+      });
+      modes.appendChild(button);
+    }
+
     for (const step of steps) {
       const button = document.createElement("button");
       button.type = "button";
@@ -344,13 +519,11 @@
       nav.appendChild(button);
     }
 
-    find.addEventListener("input", () => {
-      const query = find.value.trim().toLowerCase();
-      for (const button of nav.querySelectorAll("button")) {
-        const step = steps.find((item) => item.id === button.dataset.id);
-        const haystack = (step.situation + " " + step.title + " " + step.card).toLowerCase();
-        button.classList.toggle("hidden", query && !haystack.includes(query));
-      }
+    find.addEventListener("input", applyFilter);
+
+    document.getElementById("copy-review").addEventListener("click", () => {
+      const step = steps.find((item) => item.id === current);
+      copy(reviewPrompt(step));
     });
 
     document.getElementById("copy-all").addEventListener("click", () => {
