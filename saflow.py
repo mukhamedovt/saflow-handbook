@@ -681,6 +681,20 @@ def run(argv: list[str]) -> None:
         raise SystemExit(proc.stdout + proc.stderr)
 
 
+def cmd_open(_args: argparse.Namespace | None = None) -> int:
+    page = ROOT / "index.html"
+    if not page.exists():
+        raise SystemExit("нет index.html рядом со скриптом")
+    print(f"Открываю справочник: {page}")
+    if sys.platform == "darwin":
+        subprocess.run(["open", str(page)], check=False)
+    else:
+        import webbrowser
+
+        webbrowser.open(page.resolve().as_uri())
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--root", help="каталог фич, по умолчанию ./saflow-work")
@@ -688,7 +702,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="saflow",
         description="Конвейер системного анализа из восьми артефактов",
     )
-    sub = parser.add_subparsers(dest="cmd", required=True)
+    sub = parser.add_subparsers(dest="cmd", required=False)
 
     init = sub.add_parser("init", parents=[common], help="создать фичу из шаблона проекта")
     init.add_argument("slug")
@@ -732,6 +746,9 @@ def build_parser() -> argparse.ArgumentParser:
     bundle = sub.add_parser("bundle", parents=[common], help="собрать все артефакты в один файл")
     bundle.add_argument("slug")
     bundle.set_defaults(func=cmd_bundle)
+
+    opened = sub.add_parser("open", parents=[common], help="открыть справочник в браузере")
+    opened.set_defaults(func=cmd_open)
 
     card = sub.add_parser("card", parents=[common], help="открыть карточку справочника: 00 … 08")
     card.add_argument("step", nargs="?", default="")
@@ -855,6 +872,8 @@ EXAMPLE_INPUTS = """# Бриф фичи
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if not getattr(args, "func", None):
+        return cmd_open(args)
     return args.func(args)
 
 

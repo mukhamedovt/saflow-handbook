@@ -305,7 +305,11 @@
         if (button.dataset.id === step.id) button.setAttribute("aria-current", "true");
         else button.removeAttribute("aria-current");
       }
-      history.replaceState(null, "", "#" + step.id);
+      try {
+        history.replaceState(null, "", "#" + step.id);
+      } catch (error) {
+        location.hash = step.id;
+      }
     }
 
     function copy(text) {
