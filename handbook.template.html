@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>saflow — настольный справочник</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --paper: #fffdf8;
+      --ink: #1d1914;
+      --muted: #5f574d;
+      --line: #e3d9cb;
+      --accent: #1e4636;
+      --accent-soft: #e5efe9;
+      --danger: #6e2e24;
+      --shadow: none;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 17px/1.5 "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+    }
+    button, input { font: inherit; }
+    .app {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 100vh;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 28px 18px 32px;
+      border-right: 1px solid var(--line);
+      background: #efeae0;
+    }
+    .mark {
+      margin: 0 8px 4px;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    aside h1 {
+      margin: 0 8px 16px;
+      font-size: 28px;
+      line-height: 1.15;
+      font-weight: 600;
+    }
+    .find {
+      width: calc(100% - 16px);
+      margin: 0 8px 14px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    nav { display: flex; flex-direction: column; gap: 4px; }
+    nav button {
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    nav button small {
+      display: block;
+      color: var(--muted);
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 12px;
+    }
+    nav button[aria-current="true"] {
+      background: var(--accent);
+      color: #f6f3ec;
+    }
+    nav button[aria-current="true"] small { color: #d5e4db; }
+    nav button.hidden { display: none; }
+    main {
+      padding: 36px 48px 80px;
+      max-width: 920px;
+    }
+    .situation {
+      margin: 0 0 6px;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    main h2 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      line-height: 1.15;
+      font-weight: 600;
+    }
+    .lead {
+      margin: 0 0 22px;
+      color: var(--muted);
+    }
+    article h1 { font-size: 22px; margin: 28px 0 8px; }
+    article h2 { font-size: 22px; margin: 28px 0 8px; }
+    article h3 { font-size: 18px; margin: 22px 0 8px; }
+    article p { margin: 0 0 12px; }
+    article ul, article ol { margin: 0 0 14px; padding-left: 1.2em; }
+    article li { margin: 0 0 6px; }
+    article code {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.88em;
+      background: var(--accent-soft);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    .prompt {
+      margin-top: 28px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 16px 12px;
+    }
+    .prompt h3 {
+      margin: 0 0 8px;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 15px;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .actions button {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #f6f3ec;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    .actions button.secondary {
+      background: transparent;
+      color: var(--accent);
+    }
+    pre {
+      margin: 0;
+      max-height: 360px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #f7f4ee;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: var(--ink);
+      color: #f6f3ec;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    @media (max-width: 800px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      main { padding: 24px 18px 64px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <p class="mark">saflow</p>
+      <h1>Справочник</h1>
+      <input class="find" type="search" placeholder="Найти ситуацию" aria-label="Найти ситуацию">
+      <nav id="nav"></nav>
+    </aside>
+    <main>
+      <p class="situation" id="situation"></p>
+      <h2 id="title"></h2>
+      <p class="lead" id="lead"></p>
+      <article id="card"></article>
+      <section class="prompt" id="prompt-box">
+        <h3>Промпт для нового диалога</h3>
+        <div class="actions">
+          <button type="button" id="copy-all">Скопировать промпт</button>
+          <button type="button" class="secondary" id="copy-system">Скопировать только правила</button>
+        </div>
+        <pre id="prompt"></pre>
+        <p class="note">Вставьте страницу проекта и файлы, которые промпт перечисляет. Прошлый диалог не продолжайте: в длинном чате остаются старые догадки.</p>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast">Скопировано</div>
+  <script id="data" type="application/json">__DATA__</script>
+  <script>
+    const data = JSON.parse(document.getElementById("data").textContent);
+    const steps = data.steps;
+    const nav = document.getElementById("nav");
+    const find = document.querySelector(".find");
+    let current = steps[0].id;
+
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function inline(value) {
+      return escapeHtml(value)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    }
+
+    function renderMarkdown(markdown) {
+      const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+      let html = "";
+      let list = "";
+      const close = () => {
+        if (!list) return;
+        html += list === "ol" ? "</ol>" : "</ul>";
+        list = "";
+      };
+      for (const line of lines) {
+        const text = line.trim();
+        if (!text) {
+          close();
+          continue;
+        }
+        let match = /^(#{1,3})\s+(.*)$/.exec(text);
+        if (match) {
+          close();
+          const level = Math.min(match[1].length + 1, 3);
+          html += "<h" + level + ">" + inline(match[2]) + "</h" + level + ">";
+          continue;
+        }
+        match = /^[-*]\s+(.*)$/.exec(text);
+        if (match) {
+          if (list !== "ul") {
+            close();
+            html += "<ul>";
+            list = "ul";
+          }
+          html += "<li>" + inline(match[1]) + "</li>";
+          continue;
+        }
+        match = /^\d+\.\s+(.*)$/.exec(text);
+        if (match) {
+          if (list !== "ol") {
+            close();
+            html += "<ol>";
+            list = "ol";
+          }
+          html += "<li>" + inline(match[1]) + "</li>";
+          continue;
+        }
+        close();
+        html += "<p>" + inline(text) + "</p>";
+      }
+      close();
+      return html;
+    }
+
+    function fullPrompt(step) {
+      if (!step.system) return step.card;
+      return "СИСТЕМНЫЕ ПРАВИЛА\n\n" + step.system + "\n\nПОЛЬЗОВАТЕЛЬСКИЙ ПРОМПТ\n\n" + step.user;
+    }
+
+    function show(id) {
+      const step = steps.find((item) => item.id === id) || steps[0];
+      current = step.id;
+      document.getElementById("situation").textContent = "Ситуация";
+      document.getElementById("title").textContent = step.situation;
+      document.getElementById("lead").textContent = step.title;
+      const body = step.card.replace(/^#[^\n]*\n+/, "");
+      document.getElementById("card").innerHTML = renderMarkdown(body);
+      const box = document.getElementById("prompt-box");
+      const systemButton = document.getElementById("copy-system");
+      if (step.system) {
+        box.hidden = false;
+        systemButton.hidden = false;
+        document.getElementById("prompt").textContent = fullPrompt(step);
+      } else {
+        systemButton.hidden = true;
+        document.getElementById("prompt").textContent = step.card;
+      }
+      for (const button of nav.querySelectorAll("button")) {
+        if (button.dataset.id === step.id) button.setAttribute("aria-current", "true");
+        else button.removeAttribute("aria-current");
+      }
+      history.replaceState(null, "", "#" + step.id);
+    }
+
+    function copy(text) {
+      const done = () => {
+        const toast = document.getElementById("toast");
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallback(text, done));
+        return;
+      }
+      fallback(text, done);
+    }
+
+    function fallback(text, done) {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+      done();
+    }
+
+    for (const step of steps) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.id = step.id;
+      button.innerHTML = escapeHtml(step.situation) + "<small>" + escapeHtml(step.title) + "</small>";
+      button.addEventListener("click", () => show(step.id));
+      nav.appendChild(button);
+    }
+
+    find.addEventListener("input", () => {
+      const query = find.value.trim().toLowerCase();
+      for (const button of nav.querySelectorAll("button")) {
+        const step = steps.find((item) => item.id === button.dataset.id);
+        const haystack = (step.situation + " " + step.title + " " + step.card).toLowerCase();
+        button.classList.toggle("hidden", query && !haystack.includes(query));
+      }
+    });
+
+    document.getElementById("copy-all").addEventListener("click", () => {
+      const step = steps.find((item) => item.id === current);
+      copy(fullPrompt(step));
+    });
+    document.getElementById("copy-system").addEventListener("click", () => {
+      const step = steps.find((item) => item.id === current);
+      copy(step.system);
+    });
+
+    const fromHash = location.hash.replace("#", "");
+    show(steps.some((item) => item.id === fromHash) ? fromHash : "00");
+  </script>
+</body>
+</html>
