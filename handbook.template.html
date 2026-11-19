@@ -6,99 +6,89 @@
   <title>saflow — настольный справочник</title>
   <style>
     :root {
-      --bg: #f3efe6;
-      --paper: #fffdf8;
-      --ink: #1d1914;
-      --muted: #5f574d;
-      --line: #e3d9cb;
-      --accent: #1e4636;
-      --accent-soft: #e5efe9;
-      --danger: #6e2e24;
-      --shadow: none;
+      --bg: #f6f4ef;
+      --paper: #fffcf8;
+      --ink: #1c1916;
+      --muted: #4e473f;
+      --line: #ddd4c6;
+      --accent: #1d4a38;
+      --accent-soft: #e7f0eb;
+      --on-accent: #f6f4ef;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--ink);
-      font: 17px/1.5 "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+      font: 16px/1.45 ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
     }
-    button, input { font: inherit; }
-    .app {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      min-height: 100vh;
-    }
-    aside {
+    button, input, textarea { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .top {
       position: sticky;
       top: 0;
-      height: 100vh;
-      overflow: auto;
-      padding: 28px 18px 32px;
-      border-right: 1px solid var(--line);
-      background: #efeae0;
-    }
-    .mark {
-      margin: 0 8px 4px;
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-    aside h1 {
-      margin: 0 8px 16px;
-      font-size: 28px;
-      line-height: 1.15;
-      font-weight: 600;
-    }
-    .find {
-      width: calc(100% - 16px);
-      margin: 0 8px 14px;
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 16px;
       background: var(--paper);
-      color: var(--ink);
+      border-bottom: 1px solid var(--line);
     }
-    nav { display: flex; flex-direction: column; gap: 4px; }
-    nav button {
-      text-align: left;
+    .brand {
+      color: var(--ink);
+      font-weight: 650;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    .modes { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+    .modes button {
       border: 0;
       background: transparent;
-      color: var(--ink);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 6px 10px;
       cursor: pointer;
     }
-    nav button small {
-      display: block;
-      color: var(--muted);
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
-      font-size: 12px;
-    }
-    nav button[aria-current="true"] {
-      background: var(--accent);
-      color: #f6f3ec;
-    }
-    nav button[aria-current="true"] small { color: #d5e4db; }
-    nav button.hidden { display: none; }
-    .modes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 8px 14px; }
-    .modes button {
+    .modes button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+    .find-wrap { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+    .find {
+      width: 220px;
+      padding: 7px 10px;
       border: 1px solid var(--line);
-      background: var(--paper);
-      color: var(--ink);
       border-radius: 8px;
-      padding: 6px 8px;
+      background: var(--paper);
+    }
+    .app { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 53px); }
+    aside {
+      position: sticky;
+      top: 53px;
+      height: calc(100vh - 53px);
+      overflow: auto;
+      padding: 16px 12px 24px;
+      border-right: 1px solid var(--line);
+      background: #f3f0e8;
+    }
+    .rail-label { margin: 4px 8px 8px; color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+    #nav { display: flex; flex-direction: column; gap: 2px; }
+    #nav button {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 8px;
+      text-align: left;
+      border: 0;
+      border-left: 3px solid transparent;
+      background: transparent;
+      border-radius: 8px;
+      padding: 8px;
       cursor: pointer;
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
-      font-size: 13px;
     }
-    .modes button[aria-pressed="true"] {
-      background: var(--accent);
-      color: #f6f3ec;
-      border-color: var(--accent);
-    }
+    #nav button strong { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; }
+    #nav button small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    #nav .idx { color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; padding-top: 2px; }
+    #nav button[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+    #nav button[aria-current="true"] .idx { color: var(--accent); }
+    #nav button.hidden { display: none; }
+    #empty { margin: 12px 8px; color: var(--muted); font-size: 14px; }
     .checks { list-style: none; padding: 0; margin: 0 0 12px; }
     .checks li { margin: 0 0 8px; }
     .checks label {
@@ -127,31 +117,26 @@
       font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
       font-size: 14px;
     }
-    main {
-      padding: 36px 48px 80px;
-      max-width: 920px;
-    }
-    .situation {
-      margin: 0 0 6px;
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+    main { display: flex; flex-direction: column; padding: 28px 40px 28px; max-width: 880px; }
+    main.reviewing .dock { order: 5; }
+    #review-box { order: 4; }
+    .stepper { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 18px; }
+    .stepper button {
+      min-width: 36px;
+      height: 32px;
+      border: 1px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
       font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--accent);
     }
-    main h2 {
-      margin: 0 0 8px;
-      font-size: 34px;
-      line-height: 1.15;
-      font-weight: 600;
-    }
-    .lead {
-      margin: 0 0 22px;
-      color: var(--muted);
-    }
-    article h1 { font-size: 22px; margin: 28px 0 8px; }
-    article h2 { font-size: 22px; margin: 28px 0 8px; }
-    article h3 { font-size: 18px; margin: 22px 0 8px; }
+    .stepper button[aria-current="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+    .situation { margin: 0 0 6px; color: var(--accent); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+    main h1 { margin: 0 0 8px; font-size: 32px; line-height: 1.15; font-weight: 650; letter-spacing: -0.02em; }
+    .lead { margin: 0 0 20px; color: var(--muted); }
+    article { max-width: 68ch; font-family: Palatino, "Palatino Linotype", Georgia, serif; font-size: 18px; line-height: 1.55; }
+    article h2 { font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif; font-size: 18px; margin: 28px 0 8px; }
+    article h3 { font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif; font-size: 16px; margin: 22px 0 8px; }
     article p { margin: 0 0 12px; }
     article ul, article ol { margin: 0 0 14px; padding-left: 1.2em; }
     article li { margin: 0 0 6px; }
@@ -170,25 +155,28 @@
       border-radius: 12px;
       padding: 16px 16px 12px;
     }
-    .prompt h3 {
-      margin: 0 0 8px;
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
-      font-size: 15px;
-    }
+    .prompt h2 { margin: 0 0 8px; font-size: 16px; }
+    details summary { cursor: pointer; color: var(--muted); }
+    details pre { margin-top: 10px; }
     .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .actions button {
+    button.primary, .actions button {
       border: 1px solid var(--accent);
       background: var(--accent);
-      color: #f6f3ec;
+      color: var(--on-accent);
       border-radius: 8px;
       padding: 8px 12px;
       cursor: pointer;
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
-      font-size: 14px;
     }
-    .actions button.secondary {
-      background: transparent;
-      color: var(--accent);
+    button.secondary, .actions button.secondary { background: transparent; color: var(--accent); }
+    button:disabled { opacity: 0.4; cursor: default; }
+    .dock {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      padding: 12px 0 4px;
+      border-top: 1px solid var(--line);
     }
     pre {
       margin: 0;
@@ -209,50 +197,65 @@
     }
     .toast {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
       background: var(--ink);
-      color: #f6f3ec;
+      color: var(--on-accent);
       padding: 8px 12px;
       border-radius: 8px;
-      font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
       font-size: 14px;
       opacity: 0;
-      pointer-events: none;
     }
     .toast.show { opacity: 1; }
     @media (max-width: 800px) {
+      .top { flex-wrap: wrap; }
+      .find-wrap, .find { width: 100%; }
       .app { grid-template-columns: 1fr; }
-      aside { position: relative; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
-      main { padding: 24px 18px 64px; }
+      aside { position: relative; top: 0; height: auto; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+      #nav { flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
+      #nav button { min-width: 220px; }
+      main { padding: 20px 16px 24px; }
     }
   </style>
 </head>
 <body>
+  <header class="top">
+    <a class="brand" href="#00">saflow</a>
+    <div class="modes" id="modes" role="tablist" aria-label="Режим"></div>
+    <label class="find-wrap">Найти
+      <input class="find" type="search" placeholder="контракт, проведение">
+    </label>
+  </header>
   <div class="app">
     <aside>
-      <p class="mark">saflow</p>
-      <h1>Справочник</h1>
-      <div class="modes" id="modes"></div>
-      <input class="find" type="search" placeholder="Найти ситуацию" aria-label="Найти ситуацию">
-      <nav id="nav"></nav>
+      <p class="rail-label" id="rail-label">Шаги</p>
+      <nav id="nav" aria-label="Ситуации"></nav>
+      <p id="empty" hidden>В этом режиме ничего не нашлось. Очистите поиск или смените режим.</p>
     </aside>
     <main>
+      <nav class="stepper" id="stepper" aria-label="Порядок проектирования"></nav>
       <p class="situation" id="situation"></p>
-      <h2 id="title"></h2>
+      <h1 id="title"></h1>
       <p class="lead" id="lead"></p>
+      <div class="dock">
+        <button type="button" class="secondary" id="prev">Назад</button>
+        <button type="button" class="primary" id="copy-dock">Скопировать промпт</button>
+        <button type="button" class="secondary" id="next">Дальше</button>
+      </div>
       <article id="card"></article>
       <section class="prompt" id="prompt-box">
-        <h3>Промпт для нового диалога</h3>
+        <details id="prompt-details">
+          <summary>Показать текст промпта</summary>
+          <pre id="prompt"></pre>
+        </details>
+        <p class="note">Новый диалог. Подставьте страницу проекта и файлы из промпта, прошлый чат не продолжайте.</p>
         <div class="actions">
-          <button type="button" id="copy-all">Скопировать промпт</button>
           <button type="button" class="secondary" id="copy-system">Скопировать только правила</button>
         </div>
-        <pre id="prompt"></pre>
-        <p class="note">Вставьте страницу проекта и файлы, которые промпт перечисляет. Прошлый диалог не продолжайте: в длинном чате остаются старые догадки.</p>
       </section>
       <section class="prompt" id="review-box" hidden>
-        <h3>Сверка фрагмента с артефактами</h3>
+        <h2>Сверка фрагмента с артефактами</h2>
         <div class="actions" id="profiles"></div>
         <ul class="checks" id="checks"></ul>
         <label class="field">Критерии и сценарий
@@ -261,10 +264,8 @@
         <label class="field">Фрагмент кода
           <textarea id="code" class="paste" spellcheck="false"></textarea>
         </label>
-        <div class="actions">
-          <button type="button" id="copy-review">Скопировать запрос на сверку</button>
-        </div>
-        <p class="note">Галочки — ваш черновик. В запрос попадёт и фрагмент. Модель не должна переписывать модуль: только покрытие, дыры и вопросы разработчику.</p>
+        <p class="note" id="check-count"></p>
+        <p class="note">Галочки — черновик. В запрос попадут они и фрагмент. Модуль переписывать не нужно: в ответе покрытие, дыры и вопросы разработчику.</p>
       </section>
     </main>
   </div>
@@ -312,7 +313,7 @@
         let match = /^(#{1,3})\s+(.*)$/.exec(text);
         if (match) {
           close();
-          const level = Math.min(match[1].length + 1, 3);
+          const level = match[1].length;
           html += "<h" + level + ">" + inline(match[2]) + "</h" + level + ">";
           continue;
         }
@@ -394,12 +395,18 @@
           if (input.checked) next.add(item.id);
           else next.delete(item.id);
           saveChecks(next);
+          const visible = [...checks.querySelectorAll("input")];
+          const marked = visible.filter((input) => input.checked).length;
+          document.getElementById("check-count").textContent = "Отмечено " + marked + " из " + visible.length;
         });
         label.appendChild(input);
         label.appendChild(document.createTextNode(item.text));
         li.appendChild(label);
         checks.appendChild(li);
       }
+      const visible = [...checks.querySelectorAll("input")];
+      const marked = visible.filter((input) => input.checked).length;
+      document.getElementById("check-count").textContent = "Отмечено " + marked + " из " + visible.length;
       box.hidden = false;
     }
 
@@ -424,12 +431,23 @@
 
     function applyFilter() {
       const query = find.value.trim().toLowerCase();
+      let visible = 0;
       for (const button of nav.querySelectorAll("button")) {
         const step = steps.find((item) => item.id === button.dataset.id);
         const inGroup = step.group === group;
         const haystack = (step.situation + " " + step.title + " " + step.card).toLowerCase();
-        button.classList.toggle("hidden", !inGroup || (query && !haystack.includes(query)));
+        const hide = !inGroup || (query && !haystack.includes(query));
+        button.classList.toggle("hidden", hide);
+        if (!hide) visible += 1;
       }
+      document.getElementById("empty").hidden = visible !== 0;
+    }
+
+    function move(direction) {
+      const list = steps.filter((item) => item.group === group);
+      const index = list.findIndex((item) => item.id === current);
+      const target = list[index + direction];
+      if (target) show(target.id);
     }
 
     function show(id) {
@@ -440,29 +458,52 @@
       for (const button of modes.querySelectorAll("button")) {
         button.setAttribute("aria-pressed", button.dataset.group === group ? "true" : "false");
       }
-      document.getElementById("situation").textContent = "Ситуация";
+      const groupLabel = (data.groups.find((item) => item.id === group) || {}).label || "";
+      document.getElementById("situation").textContent = groupLabel;
+      document.getElementById("rail-label").textContent = groupLabel;
       document.getElementById("title").textContent = step.situation;
       document.getElementById("lead").textContent = step.title;
       const body = step.card.replace(/^#[^\n]*\n+/, "");
       document.getElementById("card").innerHTML = renderMarkdown(body);
       const box = document.getElementById("prompt-box");
       const systemButton = document.getElementById("copy-system");
+      const details = document.getElementById("prompt-details");
+      const stepper = document.getElementById("stepper");
+      const dockCopy = document.getElementById("copy-dock");
+      details.open = false;
+      document.querySelector("main").classList.toggle("reviewing", Boolean(step.review));
+      stepper.hidden = step.group !== "work";
+      if (!stepper.childElementCount) {
+        for (const item of steps.filter((entry) => entry.group === "work")) {
+          const jump = document.createElement("button");
+          jump.type = "button";
+          jump.textContent = item.id;
+          jump.title = item.situation;
+          jump.addEventListener("click", () => show(item.id));
+          stepper.appendChild(jump);
+        }
+      }
+      for (const jump of stepper.querySelectorAll("button")) {
+        if (jump.textContent === step.id) jump.setAttribute("aria-current", "true");
+        else jump.removeAttribute("aria-current");
+      }
+      const list = steps.filter((item) => item.group === step.group);
+      const index = list.findIndex((item) => item.id === step.id);
+      document.getElementById("prev").disabled = index <= 0;
+      document.getElementById("next").disabled = index < 0 || index >= list.length - 1;
       if (step.review) {
         box.hidden = true;
+        dockCopy.textContent = "Скопировать запрос на сверку";
         renderReview();
       } else {
         document.getElementById("review-box").hidden = true;
-        if (step.system) {
-          box.hidden = false;
-          systemButton.hidden = false;
-          document.getElementById("prompt").textContent = fullPrompt(step);
-        } else {
-          box.hidden = false;
-          systemButton.hidden = true;
-          document.getElementById("prompt").textContent = step.card;
-        }
+        box.hidden = false;
+        dockCopy.textContent = "Скопировать промпт";
+        systemButton.hidden = !step.system;
+        document.getElementById("prompt").textContent = step.system ? fullPrompt(step) : step.card;
       }
       applyFilter();
+      window.scrollTo(0, 0);
       for (const button of nav.querySelectorAll("button")) {
         if (button.dataset.id === step.id) button.setAttribute("aria-current", "true");
         else button.removeAttribute("aria-current");
@@ -514,22 +555,19 @@
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.id = step.id;
-      button.innerHTML = escapeHtml(step.situation) + "<small>" + escapeHtml(step.title) + "</small>";
+      button.innerHTML = "<span class=\"idx\">" + escapeHtml(step.id) + "</span><span><strong>" + escapeHtml(step.situation) + "</strong><small>" + escapeHtml(step.title) + "</small></span>";
       button.addEventListener("click", () => show(step.id));
       nav.appendChild(button);
     }
 
     find.addEventListener("input", applyFilter);
 
-    document.getElementById("copy-review").addEventListener("click", () => {
+    document.getElementById("copy-dock").addEventListener("click", () => {
       const step = steps.find((item) => item.id === current);
-      copy(reviewPrompt(step));
+      copy(step.review ? reviewPrompt(step) : fullPrompt(step));
     });
-
-    document.getElementById("copy-all").addEventListener("click", () => {
-      const step = steps.find((item) => item.id === current);
-      copy(fullPrompt(step));
-    });
+    document.getElementById("prev").addEventListener("click", () => move(-1));
+    document.getElementById("next").addEventListener("click", () => move(1));
     document.getElementById("copy-system").addEventListener("click", () => {
       const step = steps.find((item) => item.id === current);
       copy(step.system);
